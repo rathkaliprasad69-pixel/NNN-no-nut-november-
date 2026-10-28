@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Iron Streak</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#E6E3DB;--surface:#F3F1EB;--ink:#1A1D2B;--mute:#5B5F70;--bronze:#9A6A1C;--line:#CFCABD;--danger:#9B2C2C;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0F1220;--surface:#181C30;--ink:#EDE6D6;--mute:#9AA0B8;--bronze:#D4A24C;--line:#2B3050;--danger:#E27676}}
+:root[data-theme="dark"]{--bg:#0F1220;--surface:#181C30;--ink:#EDE6D6;--mute:#9AA0B8;--bronze:#D4A24C;--line:#2B3050;--danger:#E27676}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.45}
+main{max-width:460px;margin:0 auto;padding:20px 18px 40px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.top input{background:transparent;border:0;border-bottom:1px solid var(--line);color:var(--ink);font:inherit;font-size:16px;padding:4px 0;width:60%}
+.title{font-family:Cinzel,Georgia,serif;font-weight:800;font-size:15px;color:var(--bronze);text-align:right}
+.ringwrap{position:relative;width:min(300px,82vw);aspect-ratio:1;margin:26px auto 8px}
+.ringwrap svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ringwrap circle{fill:none;stroke-width:8}
+.trk{stroke:var(--line)}
+.prg{stroke:var(--bronze);stroke-linecap:round;transition:stroke-dashoffset .9s linear}
+.center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.days{font-family:Cinzel,Georgia,serif;font-weight:800;font-size:92px;line-height:1}
+.lbl{color:var(--mute);font-size:14px;margin-top:2px}
+.clock{font-variant-numeric:tabular-nums;font-size:22px;margin-top:10px}
+.cap{text-align:center;color:var(--mute);font-size:13px;margin:0 0 18px}
+.quote{background:var(--surface);border-left:4px solid var(--bronze);padding:14px 16px;border-radius:4px;font-size:16px}
+h2{font-family:Cinzel,Georgia,serif;font-size:16px;margin:26px 0 10px}
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.b{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 6px;text-align:center;font-size:12px}
+.b span{display:block;font-size:28px;margin-bottom:4px}
+.b.off{opacity:.38;filter:grayscale(1)}
+.stats{display:flex;gap:10px}
+.stats div{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+.stats b{display:block;font-size:22px}
+.stats small{color:var(--mute)}
+.reset{width:100%;margin-top:28px;padding:14px;border-radius:10px;border:1px solid var(--danger);background:transparent;color:var(--danger);font:inherit;font-size:16px;font-weight:600}
+.reset:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--bronze);outline-offset:2px}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:5}
+.modal.on{display:flex}
+.card{background:var(--surface);border-radius:14px;padding:22px;max-width:400px;width:100%}
+.card h3{font-family:Cinzel,Georgia,serif;margin:0 0 8px;font-size:20px}
+.card p{margin:0 0 16px}
+.row{display:flex;gap:10px}
+.row button{flex:1;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:15px}
+.row .go{background:var(--danger);border-color:var(--danger);color:#fff}
+.note{color:var(--mute);font-size:12px;text-align:center;margin-top:18px}
+.mis{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:10px}
+.mis p{margin:6px 0 10px}
+.lv{color:var(--bronze);font-size:13px;margin-left:6px}
+.opt{display:block;width:100%;text-align:left;margin:6px 0;padding:11px 12px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-size:15px}
+.opt.ok{border-color:#2F855A;background:rgba(47,133,90,.22)}
+.opt.bad{border-color:var(--danger);background:rgba(155,44,44,.2)}
+.go2{padding:10px 16px;border-radius:8px;border:1px solid var(--bronze);background:transparent;color:var(--bronze);font:inherit;font-weight:600}
+.go2:disabled{opacity:.55}
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <input id="name" placeholder="Your name" maxlength="24" aria-label="Your name">
+    <div class="title" id="rank"></div>
+  </div>
+  <div class="ringwrap">
+    <svg viewBox="0 0 200 200" aria-hidden="true"><circle class="trk" cx="100" cy="100" r="90"/><circle class="prg" id="prg" cx="100" cy="100" r="90" stroke-dasharray="565.49" stroke-dashoffset="565.49"/></svg>
+    <div class="center"><div class="days" id="days">0</div><div class="lbl" id="dl">days strong</div><div class="clock" id="clock">24:00:00</div></div>
+  </div>
+  <p class="cap">Time left in today’s 24-hour round</p>
+  <div class="quote" id="quote"></div>
+
+  <h2>Today’s mission</h2>
+  <div class="mis"><b>Body</b><p id="paTxt"></p><button class="go2" id="paBtn"></button></div>
+  <div class="mis"><b>Mind quiz</b><span class="lv" id="lvl"></span><div id="quiz"></div></div>
+
+  <h2>Badges</h2>
+  <div class="badges" id="badges"></div>
+
+  <h2>Record</h2>
+  <div class="stats">
+    <div><b id="best">0</b><small>Best streak</small></div>
+    <div><b id="resets">0</b><small>Resets</small></div>
+    <div><b id="hrs">0</b><small>Total hours</small></div>
+  </div>
+
+  <button class="reset" id="resetBtn">I relapsed — reset to day 0</button>
+  <p class="note">Progress is saved on this device. Nothing is sent anywhere.</p>
+</main>
+
+<div class="modal" id="m1"><div class="card" role="dialog" aria-modal="true">
+  <h3>Reset to day 0?</h3><p id="m1t"></p>
+  <div class="row"><button id="no">Keep going</button><button class="go" id="yes">Reset</button></div>
+</div></div>
+<div class="modal" id="m2"><div class="card" role="dialog" aria-modal="true">
+  <h3>The streak is broken.</h3><p id="m2t"></p>
+  <div class="row"><button id="ok">Day 0. Back to work.</button></div>
+</div></div>
+
+<script>
+var RANKS=[
+ {d:0,t:"Recruit",e:"🪖",q:["Day zero. Every warrior starts exactly here. Win the first 24 hours."]},
+ {d:1,t:"Initiate",e:"🌅",q:["One full day held. The hardest step is behind you — now stack another.","You said you would, and you did. Do it again tomorrow."]},
+ {d:3,t:"Fighter",e:"⚔️",q:["Three days. The urges are loud because you’re winning. Don’t negotiate with them.","Fighters don’t wait for motivation. They show up."]},
+ {d:7,t:"Warrior",e:"🛡️",q:["A full week. You’re not trying anymore — you’re training. Keep your shield up.","Seven days of discipline. Most people never get here. You did."]},
+ {d:14,t:"Gladiator",e:"🗡️",q:["Two weeks in the arena. Your mind is getting sharper and your word is getting stronger.","Gladiator. Every day you hold, the old habit loses ground."]},
+ {d:30,t:"Spartan",e:"🔱",q:["Thirty days. This is no longer a challenge — it’s who you are becoming.","Spartans don’t count the enemy. They hold the line. Hold it."]},
+ {d:60,t:"Centurion",e:"🏛️",q:["Sixty days. You command yourself now. That is the hardest army to lead."]},
+ {d:90,t:"Titan",e:"⚡",q:["Ninety days. You rebuilt your habits from the ground up. Stand tall."]},
+ {d:180,t:"Legend",e:"🐉",q:["Half a year. Stories are told about discipline like this."]},
+ {d:365,t:"Immortal",e:"👑",q:["One year. You didn’t just quit a habit — you became a different man. Immortal."]}
+];
+var FALL=[
+ "That’s a loss, and it counts. Don’t hide from it — name the trigger, learn from it, and get back up. A warrior is measured by how fast he stands.",
+ "You fell. It happens to every fighter who ever lived. What matters is the next 24 hours. Starting now.",
+ "The streak is gone, but the strength you built isn’t. Take the lesson, drop the excuses, and begin again."
+];
+var DAY=86400000,KEY="ironStreak1";
+var S={start:Date.now(),bestMs:0,resets:0,name:"",log:[]};
+try{var raw=localStorage.getItem(KEY);if(raw){S=Object.assign(S,JSON.parse(raw))}else{save()}}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function $(i){return document.getElementById(i)}
+function rankFor(d){var r=RANKS[0];RANKS.forEach(function(x){if(d>=x.d)r=x});return r}
+var C=2*Math.PI*90;
+function render(){
+  var el=Date.now()-S.start; if(el<0){el=0}
+  if(el>S.bestMs){S.bestMs=el;save()}
+  var d=Math.floor(el/DAY),rem=DAY-(el%DAY);
+  var h=Math.floor(rem/3600000),m=Math.floor(rem%3600000/60000),s=Math.floor(rem%60000/1000);
+  function p(n){return(n<10?"0":"")+n}
+  $("days").textContent=d;$("dl").textContent=d===1?"day strong":"days strong";
+  $("clock").textContent=p(h)+":"+p(m)+":"+p(s);
+  $("prg").style.strokeDashoffset=C*(rem/DAY);
+  var r=rankFor(d);$("rank").textContent=r.e+" "+r.t;
+  $("quote").textContent=r.q[d%r.q.length];
+  var bd=Math.floor(S.bestMs/DAY);
+  $("best").textContent=bd;$("resets").textContent=S.resets;$("hrs").textContent=Math.floor(el/3600000);
+}
+function badges(){
+  var bd=Math.floor(S.bestMs/DAY);
+  $("badges").innerHTML=RANKS.slice(1).map(function(r){
+    return '<div class="b'+(bd>=r.d?'':' off')+'"><span>'+r.e+'</span>'+r.t+'<br>'+r.d+(r.d===1?' day':' days')+'</div>'}).join("");
+}
+$("name").value=S.name||"";
+$("name").addEventListener("input",function(e){S.name=e.target.value;save()});
+$("resetBtn").onclick=function(){
+  var d=Math.floor((Date.now()-S.start)/DAY);
+  $("m1t").textContent="You’re at "+d+(d===1?" day":" days")+". Be honest with yourself: did you relapse? Resetting sets the counter back to 0. Your badges stay.";
+  $("m1").classList.add("on");
+};
+$("no").onclick=function(){$("m1").classList.remove("on")};
+$("yes").onclick=function(){
+  var d=Math.floor((Date.now()-S.start)/DAY);
+  S.log.push({at:Date.now(),days:d});S.resets++;S.start=Date.now();save();
+  $("m1").classList.remove("on");
+  var n=S.name?S.name+", ":"";
+  $("m2t").textContent=n+FALL[S.resets%FALL.length]+(d>0?" You held "+d+(d===1?" day":" days")+" — you’ve done it before, so you can do it again.":"");
+  $("m2").classList.add("on");render();badges();mission();
+};
+$("ok").onclick=function(){$("m2").classList.remove("on")};
+var ACTS=[["push-ups",10,2],["squats",20,3],["seconds of plank",30,5],["sit-ups",15,2],["lunges per leg",10,2],["jumping jacks",30,5],["minutes of brisk walking",20,2]];
+var QB=[[
+["Ohm’s law relates which three quantities?",["Power, time, energy","Voltage, current, resistance","Flux, force, mass","Charge, field, area"],1],
+["Synchronous speed of a 4-pole motor on a 50 Hz supply?",["3000 rpm","1000 rpm","1500 rpm","750 rpm"],2],
+["A thermal overload relay protects a motor against:",["Sustained overcurrent","Surge over-voltage","Low frequency","Wrong phase sequence"],0],
+["A pressure transmitter usually outputs:",["0–10 A","4–20 mA","110 V AC","1–5 kV"],1],
+["Earth wire insulation colour per IEC is:",["Blue","Red","Green-yellow","Black"],2],
+["Which device switches a motor remotely using a small coil current?",["Fuse","Contactor","Resistor","Choke"],1]
+],[
+["A 4–20 mA loop reads 12 mA on a 0–10 bar range. Pressure is:",["5 bar","6 bar","4 bar","7.5 bar"],0],
+["Why is 4 mA, not 0 mA, the live zero?",["Saves power","Detects wire break and powers 2-wire devices","Only reduces noise","Matches 4-pole motors"],1],
+["A star-delta starter cuts starting current to what fraction of direct-on-line?",["One third","One half","Two thirds","The same"],0],
+["A load cell’s output is typically rated in:",["kΩ/A","µF","mV/V","Hz/s"],2],
+["Which sensor suits furnace-area temperatures up to about 1300 °C?",["Pt100 RTD","NTC thermistor","Bimetal strip","Type K thermocouple"],3],
+["Power factor of a lightly loaded induction motor is generally:",["Close to 1","Low and lagging","Leading","Exactly 0.5"],1]
+],[
+["A 415 V, 3-phase motor draws 20 A at 0.85 pf. Real power is about:",["10.0 kW","12.2 kW","14.1 kW","8.3 kW"],1],
+["A VFD keeps the V/f ratio constant to maintain:",["Constant flux","Constant slip","Unity pf","Zero harmonics"],0],
+["A 24 V loop powers a 2-wire transmitter needing 12 V minimum. Max loop resistance at 20 mA is:",["240 Ω","1200 Ω","600 Ω","450 Ω"],2],
+["An insulation (megger) test on a winding mainly detects:",["Turn count errors","Insulation breakdown to earth","Rotor speed error","Bearing noise"],1],
+["Hopper load cells are calibrated using:",["A clamp meter","Known test weights","A phase rotation meter","An oscilloscope"],1],
+["On an ungrounded (IT) system, a first earth fault:",["Trips instantly","Lets supply continue, with an alarm raised","Collapses the voltage","Burns the transformer"],1]
+],[
+["Slip of a 6-pole, 50 Hz motor running at 960 rpm is:",["2%","4%","5%","6%"],1],
+["Which ANSI device numbers denote overcurrent protection?",["27","50/51","87","59"],1],
+["HART signals ride on the 4–20 mA loop using:",["FSK at 1200/2200 Hz","50 Hz PWM","1 MHz Manchester","455 kHz AM"],0],
+["Voltage spikes on long VFD cables are best reduced by:",["Bigger fuses","An output reactor or dV/dt filter","Higher pf","Cooler ambient"],1],
+["Pressure drop across an orifice plate is proportional to:",["Flow","Flow squared","Square root of flow","1 / flow"],1],
+["On a 3-wire RTD, the third wire is used to:",["Earth the sensor","Compensate lead-wire resistance","Double the signal","Supply 24 V"],1]
+],[
+["An 11 kV/415 V, 1000 kVA transformer has 5% impedance. LV fault current is about:",["13.9 kA","27.8 kA","55.6 kA","6.9 kA"],1],
+["A SIL rating mainly measures a safety loop’s:",["Signal speed","Probability of failure on demand","Cable length","IP rating"],1],
+["Sensorless vector control regulates torque by estimating:",["Rotor flux and speed from a motor model","Ambient temperature","Line frequency drift","Bearing vibration"],0],
+["A PROFIBUS-PA segment carries power and data over:",["Two wires at 31.25 kbit/s","Four wires at 1 Gbit/s","Fibre only","Coax at 10 Mbit/s"],0],
+["In a balanced 3-phase 4-wire system, third-harmonic currents add up in the:",["Phase wires","Neutral","Earth only","Nowhere, they cancel"],1],
+["A thermocouple reads wrong if the compensating cable is:",["Copper","The wrong type for that thermocouple","Shielded","Longer than 1 m"],1]
+]];
+var qi=0,sc=0;
+function lvl(d){return d<7?0:d<14?1:d<30?2:d<60?3:4}
+function dayNo(){return Math.floor((Date.now()-S.start)/DAY)}
+function mission(){
+  var d=dayNo(),k=S.start+"-"+d;
+  if(!S.task||S.task.key!==k){S.task={key:k,pa:false,q:null};save();qi=0;sc=0}
+  var a=ACTS[d%ACTS.length],n=Math.min(a[1]+a[2]*Math.floor(d/2),a[1]*3);
+  $("paTxt").textContent="Today: "+n+" "+a[0]+". Scale it to your ability and stay safe.";
+  $("paBtn").textContent=S.task.pa?"Done ✓":"Mark done";
+  $("paBtn").disabled=S.task.pa;
+  $("lvl").textContent="Level "+(lvl(d)+1)+" of 5";
+  showQ();
+}
+function showQ(){
+  var d=dayNo(),box=$("quiz");
+  if(S.task.q!==null){box.innerHTML='<p>Quiz complete: <b>'+S.task.q+'/3</b>. A new set unlocks tomorrow, and it gets harder as your streak grows.</p>';return}
+  var pool=QB[lvl(d)],it=pool[(d+qi*2)%pool.length];
+  box.innerHTML='<p><b>Question '+(qi+1)+' of 3</b><br>'+it[0]+'</p>'+it[1].map(function(o,i){return '<button class="opt" data-i="'+i+'">'+o+'</button>'}).join("")+'<p id="fb"></p>';
+  box.querySelectorAll(".opt").forEach(function(b){b.onclick=function(){answer(+b.dataset.i,it)}});
+}
+function answer(i,it){
+  $("quiz").querySelectorAll(".opt").forEach(function(b,j){b.disabled=true;if(j===it[2])b.classList.add("ok");else if(j===i)b.classList.add("bad")});
+  if(i===it[2])sc++;
+  $("fb").textContent=i===it[2]?"Correct.":"Not quite. The right answer is highlighted.";
+  setTimeout(function(){qi++;if(qi>=3){S.task.q=sc;save()}showQ()},1500);
+}
+$("paBtn").onclick=function(){S.task.pa=true;save();mission()};
+badges();render();mission();setInterval(render,1000);
+setInterval(function(){if(!S.task||S.task.key!==S.start+"-"+dayNo())mission()},1000);
+</script>
+</body>
+</html>
